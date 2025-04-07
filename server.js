@@ -4,9 +4,16 @@ const http = require('http');
 const socketIo = require('socket.io');
 const mongoose = require('mongoose');
 const session = require('express-session');
+// For connect-redis, we revert to the older (v5) API usage:
 const RedisStore = require('connect-redis')(session);
 const Redis = require('ioredis');
 const rateLimit = require('express-rate-limit'); // API rate limiter
+
+const app = express();
+app.use(express.json());
+
+const cors = require('cors');
+app.use(cors());
 
 // Connect to MongoDB
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/realtime-chat-app';
@@ -20,7 +27,7 @@ const redisClient = new Redis(process.env.REDIS_URL || 'redis://localhost:6379')
 const authRoutes = require('./routes/auth');
 const roomRoutes = require('./routes/rooms');
 const messageRoutes = require('./routes/messages');
-const keyRoutes = require('./routes/keys'); // from feature 6, if integrated
+const keyRoutes = require('./routes/keys'); // Feature 6 endpoints
 const adminRoutes = require('./routes/admin'); // Feature 8 endpoints
 
 const Message = require('./models/Message');
@@ -28,9 +35,6 @@ const { processMessage } = require('./businessLogic');
 const { connectToBroker } = require('./broker');
 const logger = require('./logger');
 const { retryOperation } = require('./retry');
-
-const app = express();
-app.use(express.json());
 
 // Setup session middleware using Redis as a shared session store
 app.use(session({
@@ -52,8 +56,8 @@ app.use('/api', apiLimiter);
 app.use('/api', authRoutes);
 app.use('/api', roomRoutes);
 app.use('/api', messageRoutes);
-app.use('/api', keyRoutes); // if using feature 6 endpoints
-app.use('/api', adminRoutes); // Feature 8 endpoints
+app.use('/api', keyRoutes);
+app.use('/api', adminRoutes);
 
 // Serve static files for the frontend
 app.use(express.static('public'));
@@ -175,7 +179,6 @@ io.on('connection', (socket) => {
     logger.info(`User disconnected: ${socket.id}`);
     const username = socket.username;
     if (username) {
-      // Iterate over all rooms the socket is in (excluding its own room)
       socket.rooms.forEach(async (room) => {
         if (room !== socket.id) {
           await redisClient.srem(`room:${room}`, username);
