@@ -6,8 +6,12 @@ config:
 scenarios:
   - engine: "socketio"
     flow:
-      - emit: 
+      - emit:
+          channel: "join room"
+          data: { "room": "loadTestRoom", "username": "loadTester" }
+      - think: 1
+      - emit:
           channel: "chat message"
-          data: "Load testing message"
+          data: { "room": "loadTestRoom", "message": "Load testing message" }
       - think: 1
       - listen: "chat message"

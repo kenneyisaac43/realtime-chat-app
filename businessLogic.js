@@ -1,18 +1,40 @@
+// businessLogic.js
+
 function validateMessage(msg) {
-    // Ensure the message is a non-empty string; adjust logic for JSON if needed
-    return typeof msg === 'string' && msg.trim() !== '';
+  if (typeof msg === 'string') {
+    return msg.trim() !== '';
+  }
+  if (typeof msg === 'object' && msg !== null) {
+    // Ensure there is a non-empty 'text' property
+    return typeof msg.text === 'string' && msg.text.trim() !== '';
+  }
+  return false;
+}
+
+function processMessage(msg) {
+  if (!validateMessage(msg)) {
+    throw new Error('Invalid message format');
   }
   
-  function processMessage(msg) {
-    if (!validateMessage(msg)) {
-      throw new Error('Invalid message format');
+  // Initialize result object
+  let result = {};
+  
+  if (typeof msg === 'string') {
+    result.text = msg;
+  } else {
+    result.text = msg.text;
+    // Include additional metadata if provided
+    if (msg.sender) {
+      result.sender = msg.sender;
     }
-    // Process and augment the message (e.g., add a timestamp)
-    return {
-      text: msg,
-      timestamp: new Date().toISOString()
-    };
+    if (msg.room) {
+      result.room = msg.room;
+    }
   }
   
-  module.exports = { validateMessage, processMessage };
-  
+  // Always add a timestamp
+  result.timestamp = new Date().toISOString();
+  return result;
+}
+
+module.exports = { validateMessage, processMessage };
