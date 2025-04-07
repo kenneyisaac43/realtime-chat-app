@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const { validateMessage, processMessage } = require('../businessLogic');
+const { validateMessage, processMessage } = require('../businessLogic.js');
 
 describe('Business Logic', () => {
   describe('validateMessage', () => {
