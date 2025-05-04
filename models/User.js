@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  publicKey: { type: String, default: null },  // New field for public key
+  publicKey: { type: String, default: null },
   createdAt: { type: Date, default: Date.now }
 });
 
