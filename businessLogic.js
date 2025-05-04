@@ -1,4 +1,6 @@
 // businessLogic.js
+const crypto = require('crypto');
+const MASTER_KEY = Buffer.from(process.env.ENCRYPTION_KEY, 'hex');
 
 function validateMessage(msg) {
   if (typeof msg === 'string') {
@@ -16,24 +18,26 @@ function processMessage(msg) {
     throw new Error('Invalid message format');
   }
   
-  // Initialize result object
-  let result = {};
-  
-  if (typeof msg === 'string') {
-    result.text = msg;
-  } else {
-    result.text = msg.text;
-    // Include additional metadata if provided
-    if (msg.sender) {
-      result.sender = msg.sender;
+
+  const text = typeof msg === 'string' ? msg : msg.text;
+
+  // AES-GCM encryption
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', MASTER_KEY, iv);
+  const ciphertext = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()]);
+  const tag = cipher.getAuthTag();
+
+  const result = {
+    room:      msg.room,
+    sender:    msg.sender,
+    timestamp: new Date().toISOString(),
+    encrypted: {
+      iv:   iv.toString('hex'),
+      tag:  tag.toString('hex'),
+      data: ciphertext.toString('hex')
     }
-    if (msg.room) {
-      result.room = msg.room;
-    }
-  }
+  };
   
-  // Always add a timestamp
-  result.timestamp = new Date().toISOString();
   return result;
 }
 

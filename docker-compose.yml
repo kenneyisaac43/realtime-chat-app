@@ -9,8 +9,9 @@ services:
       - MONGO_URI=mongodb://mongodb:27017/realtime-chat-app
       - REDIS_URL=redis://redis:6379
       - RABBITMQ_URL=amqp://rabbitmq:5672
-      - SESSION_SECRET=your-session-secret
-      - JWT_SECRET=your-jwt-secret
+      - SESSION_SECRET=f7ec76236fadfbcb2c14837cb853f54d
+      - JWT_SECRET=74a2120eb786a49ee0d0c7eafffa844a
+      - ENCRYPTION_KEY=38a80557aabcd64eba3f2a38ea1b57b846a851b3fdfa3fcf559771f8c4145b31
     depends_on:
       rabbitmq:
         condition: service_healthy
