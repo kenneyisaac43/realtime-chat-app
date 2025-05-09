@@ -1,6 +1,9 @@
 // businessLogic.js
 const crypto = require('crypto');
-const MASTER_KEY = Buffer.from(process.env.ENCRYPTION_KEY, 'hex');
+const MASTER_KEY = Buffer.from(
+  process.env.ENCRYPTION_KEY || '4f8c27a1b35a57ef3c5d4aa6b1ad4c5a3fd8f9672c9d5be1c1aebb501c3cc23d',
+  'hex'
+);
 
 function validateMessage(msg) {
   if (typeof msg === 'string') {

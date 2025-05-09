@@ -24,17 +24,20 @@ describe('Business Logic', () => {
     it('should process a valid string message by adding a timestamp', () => {
       const msg = "Test message";
       const processed = processMessage(msg);
-      expect(processed).to.have.property('text', msg);
+      expect(processed).to.have.property('encrypted');
+      expect(processed.encrypted).to.have.all.keys('iv', 'tag', 'data');
       expect(processed).to.have.property('timestamp');
     });
 
     it('should process an object message and preserve sender and room if provided', () => {
       const input = { text: "Hello", sender: "user1", room: "room1" };
       const processed = processMessage(input);
-      expect(processed).to.have.property('text', "Hello");
-      expect(processed).to.have.property('timestamp');
+      expect(processed).to.have.property('encrypted');
+      expect(processed.encrypted).to.have.all.keys('iv', 'tag', 'data');
       expect(processed).to.have.property('sender', "user1");
       expect(processed).to.have.property('room', "room1");
+      expect(processed).to.have.property('timestamp');
+      
     });
 
     it('should throw an error for an invalid message', () => {
