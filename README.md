@@ -1,5 +1,25 @@
 # EDA Real-Time Chat App Documentation
 
+# Dependencies
+- Docker Desktop (Windows/Mac) or Docker Engine (Linux) (Make sure to start the Docker Engine before running the containers)
+
+## Setup/Deployment Instructions (Docker)
+
+1. **Start Docker Engine:**  
+   Ensure Docker is running on your machine.
+
+2. **Docker Deployment:**  
+   Use the provided Dockerfile and docker-compose.yml to run all services:
+
+   run this command in the root directory of the project:
+   ```bash
+   docker-compose up --build
+   ```
+
+   This will spin up containers for the backend, RabbitMQ, MongoDB, and Redis.
+   The Frontend will be Hosted on 127.0.0.1:3000/
+
+
 ## Overview
 
 The EDA Real-Time Chat App is a scalable, low-latency, and asynchronous messaging platform built using an event-driven architecture. The backend is developed with Node.js and Express, using Socket.IO for real-time communication. Key integrations include:
@@ -145,60 +165,6 @@ The application is composed of several interconnected components:
 - **Consuming:**  
   The consumer saves messages to MongoDB, then emits them to the correct room using Socket.IO. Acknowledgements (`ack`) and negative acknowledgements (`nack`) with retries ensure reliability.
 
-## Testing Instructions
-
-### Unit Testing
-- **Tools:** Mocha and Chai are used to test modules such as businessLogic.
-- **Example:**  
-  Run tests using:
-  ```bash
-  npm test
-  ```
-  This includes tests ensuring that messages are processed correctly (with support for both string and object inputs).
-
-### Integration Testing
-- **WebSocket Flow:**  
-  Use a test client (e.g., `test/testClient.js`) to simulate joining a room, sending messages, and receiving enriched message data.
-- **Load Testing:**  
-  Use Artillery (via `load-test.yml`) to simulate multiple concurrent Socket.IO connections and message events:
-  ```bash
-  artillery run load-test.yml
-  ```
-
-## Deployment Instructions
-
-1. **Environment Variables:**  
-   Create a `.env` file with (for example):
-   ```env
-   PORT=3000
-   MONGO_URI=mongodb://mongodb:27017/realtime-chat-app
-   REDIS_URL=redis://redis:6379
-   RABBITMQ_URL=amqp://rabbitmq:5672
-   SESSION_SECRET=your-session-secret
-   JWT_SECRET=your-jwt-secret
-   ```
-2. **Dependencies:**  
-   Install with:
-   ```bash
-   npm install
-   ```
-3. **Run the Application:**  
-   Start the server using:
-   ```bash
-   node server.js
-   ```
-   For development, use:
-   ```bash
-   nodemon server.js
-   ```
-4. **Docker Deployment:**  
-   Use the provided Dockerfile and docker-compose.yml to run all services:
-   ```bash
-   docker-compose up --build
-   ```
-   This will spin up containers for the backend, RabbitMQ, MongoDB, and Redis.
-
-
 ## Conclusion
 
-This documentation provides a comprehensive guide for developers and stakeholders. It details the application's architecture, API contracts, real-time events, and testing and deployment instructions. This living document will continue to evolve as new features and optimizations are integrated into the system.
+This documentation provides a comprehensive guide for developers. It details the application's architecture, API contracts, real-time events, and deployment instructions. This living document will continue to evolve as new features and optimizations are integrated into the system.
