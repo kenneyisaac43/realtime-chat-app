@@ -165,6 +165,25 @@ The application is composed of several interconnected components:
 - **Consuming:**  
   The consumer saves messages to MongoDB, then emits them to the correct room using Socket.IO. Acknowledgements (`ack`) and negative acknowledgements (`nack`) with retries ensure reliability.
 
+## Testing
+  The application using unit tests to make sure components work as intnended. They are build using the Mocha and Chai libraries.
+
+  Make sure to run the following commands or already have the correct packages installed.
+  ```bash
+  npm install
+  npm install sinon
+  ```
+
+  The following command will run the unit tests:
+  ```bash
+  npm run test
+  ```
+
+  Load testing can be ran with the following command:
+  ```bash
+  artillery run load-test.yml
+  ```
+
 ## Conclusion
 
 This documentation provides a comprehensive guide for developers. It details the application's architecture, API contracts, real-time events, and deployment instructions. This living document will continue to evolve as new features and optimizations are integrated into the system.

@@ -1,0 +1,211 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 30
+      arrivalRate: 1
+      rampTo: 5
+      name: "Gentle warm up phase"
+    - duration: 60
+      arrivalRate: 5
+      rampTo: 10
+      name: "Warm up phase"
+    - duration: 90
+      arrivalRate: 10
+      name: "Sustained load"
+    - duration: 30
+      arrivalRate: 5
+      name: "Cool down"
+  engines:
+    socketio: {}
+    http: {}
+  http:
+    timeout: 30000
+    pool: 20 
+    cookieJar: true
+  socketio:
+    timeout: 30000
+  plugins:
+    metrics-by-endpoint: {}
+    expect: {}
+  processor: "load-test-functions.js"
+  quiet: true  
+  verbose: false
+scenarios:
+  - name: "User registration and authentication"
+    weight: 15
+    flow:
+      - get:
+          url: "/"
+          name: "Visit homepage"
+          capture:
+            - header: "date" 
+              as: "timestamp"
+          ifError:
+            - set:
+                continue: false
+          think: 2
+      
+      - post:
+          url: "/api/signup"
+          name: "Register new user"
+          json:
+            username: "tester-{{ $randomString(6) }}"
+            password: "testPassword123"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+              default: "failed-auth"
+          expect:
+            - statusCode: { "$in": [201, 409] }
+
+  - name: "Full user journey with room interaction"
+    weight: 60
+    flow:
+      - post:
+          url: "/api/signup"
+          name: "Register new user"
+          json:
+            username: "user-{{ $randomString(6) }}"
+            password: "testPassword123"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+              default: "failed-auth"
+          expect:
+            - statusCode: { "$in": [201, 409] }
+      
+      - think: 2
+
+      - function: "checkAuthAndLogin"
+      
+      - think: 2
+
+      - post:
+          url: "/api/rooms"
+          name: "Create new room"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            name: "room-{{ $randomString(6) }}"
+          capture:
+            - json: "$.room.name"
+              as: "roomName"
+              default: "general"
+      
+      - think: 2
+
+      - get:
+          url: "/api/rooms"
+          name: "Get room list"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+      
+      - think: 1
+
+      - get:
+          url: "/api/messages?room={{ roomName }}&limit=10"
+          name: "Get messages in room"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+      
+      - think: 2
+
+      - connect:
+          engine: "socketio"
+          name: "Socket.io connection"
+          query:
+            token: "{{ authToken }}"
+          ifError:
+            - set:
+                socketConnected: false
+                continue: false 
+
+      - emit:
+          channel: "join room"
+          name: "Join chat room"
+          data:
+            room: "{{ roomName }}"
+            username: "user-{{ $randomString(6) }}"
+
+      - think: 1
+
+      - function: "generateLimitedMessageCount"
+      - loop:
+          - function: "generateRandomMessage"
+          - emit:
+              channel: "chat message"
+              name: "Send chat message"
+              data:
+                room: "{{ roomName }}"
+                message: "{{ randomMessage }}"
+          - think: 2
+          - listen:
+              channel: "chat message"
+              name: "Receive chat message"
+              timeout: 10000
+              ifError:
+                - set:
+                    continue: true
+        count: "{{ messageCount }}"
+
+      - get:
+          url: "/api/messages?room={{ roomName }}&limit=20"
+          name: "Verify messages saved"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - disconnect:
+          engine: "socketio"
+          name: "Close socket connection"
+
+  - name: "Lurker scenario (read-only user)"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/signup"
+          name: "Register lurker user"
+          json:
+            username: "lurker-{{ $randomString(6) }}"
+            password: "testPassword123"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+              default: "failed-auth"
+          ifError:
+            - function: "setDefaultAuth"
+      
+      - think: 2
+      
+      - get:
+          url: "/api/rooms"
+          name: "Lurker gets room list"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          capture:
+            - json: "$.rooms[0].name"
+              as: "roomToJoin"
+              default: "general"
+      
+      - think: 2
+
+      - connect:
+          engine: "socketio"
+          name: "Lurker socket connection"
+          query:
+            token: "{{ authToken }}"
+          ifError:
+            - set:
+                continue: false
+      
+      - emit:
+          channel: "join room"
+          name: "Lurker joins room"
+          data:
+            room: "{{ roomToJoin }}"
+            username: "lurker-{{ $randomString(6) }}"
+      
+      - think: 10
+      
+      - disconnect:
+          engine: "socketio"
+          name: "Lurker closes connection"
